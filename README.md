@@ -1,6 +1,6 @@
 # AI Weather App
 
-This is a simple FastAPI web application that provides current weather information for a given US zip code using the OpenWeatherMap API.
+This is a simple FastAPI web application that provides current weather information for a given US zip code using the OpenWeatherMap API. It also saves each query result to a local SQLite database and displays historical data for the queried zip code, allowing users to delete individual history entries.
 
 ## Setup
 
@@ -79,7 +79,16 @@ This will start the server, typically at `http://127.0.0.1:8000`. The `--reload`
 
 ## Usage
 
-Once the server is running, you can access the weather endpoint using a web browser or a tool like `curl`:
+Once the server is running, navigate to `http://127.0.0.1:8000/` in your web browser.
+
+Enter a valid US zip code into the input field and click "Get Weather".
+
+*   The latest weather data for the zip code will be fetched from OpenWeatherMap and displayed.
+*   The fetched data will be saved to the local SQLite database (`dev.db`).
+*   Previously saved historical data for the *same zip code* will be displayed in a second table below the latest results.
+*   Each row in the historical data table has a "Delete" button that allows you to remove that specific entry from the database after confirmation.
+
+You can also access the raw weather data API endpoint directly using a tool like `curl`:
 
 ```bash
 curl http://127.0.0.1:8000/weather/{zip_code}
@@ -87,18 +96,13 @@ curl http://127.0.0.1:8000/weather/{zip_code}
 
 Replace `{zip_code}` with a valid US zip code (e.g., `90210`).
 
-**Example:**
+**Example API Response:**
 
-```bash
-curl http://127.0.0.1:8000/weather/94043
-```
-
-This will return a JSON response with the current weather details for the specified zip code, including temperature (in Fahrenheit), weather conditions, humidity, wind speed, and coordinates.
-
-**Example Response:**
+When using the `/weather/{zip_code}` endpoint directly, the response includes both the latest data and the history:
 
 ```json
 {
+  "latest": {
     "city": "Mountain View",
     "weather": "Clear",
     "description": "clear sky",
@@ -108,7 +112,18 @@ This will return a JSON response with the current weather details for the specif
     "wind_speed": 5.75,
     "latitude": 37.3861,
     "longitude": -122.0839
+  },
+  "history": [
+    {
+      "id": 1,
+      "createdAt": "2023-10-27T10:00:00.000Z",
+      "zipCode": "94043",
+      "city": "Mountain View",
+      // ... other fields ...
+    },
+    // ... more history records ...
+  ]
 }
 ```
 
-If an invalid zip code is provided or another error occurs, an appropriate JSON error message will be returned. 
+If an invalid zip code is provided or another error occurs, an appropriate JSON error message will be returned by the API endpoint. 
