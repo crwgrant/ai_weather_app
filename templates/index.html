@@ -207,7 +207,6 @@
                 }
 
                 const newRecord = await response.json(); 
-                alert('Successfully saved to history!');
 
                 // --- Update History Display --- 
                 const historyContainer = document.getElementById('history-content');
@@ -256,7 +255,8 @@
 
             } catch (error) {
                 console.error('Error saving history:', error);
-                alert(`Error saving history: ${error.message}`);
+                // Keep the error alert for feedback on failures
+                alert(`Error saving history: ${error.message}`); 
                  // Re-enable button on error
                  if (saveButton) saveButton.disabled = false; 
                  if (saveButton) saveButton.textContent = 'Save to History';
@@ -318,11 +318,10 @@
                 } else {
                     console.warn(`Could not find row history-row-${recordId} to remove.`);
                 }
-                // Optionally show a success message to the user
-                alert(`Record ${recordId} deleted successfully.`); 
 
             } catch (error) {
                 console.error('Error deleting record:', error);
+                 // Keep the error alert for feedback on failures
                 alert(`Error deleting record ${recordId}: ${error.message}`);
             }
         }
