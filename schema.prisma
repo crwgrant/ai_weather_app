@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-py" // Use Prisma Client Python
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL") // Use environment variable for database URL
+}
+
+model WeatherData {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  zipCode     String    // The zip code requested
+  city        String?
+  weather     String?
+  description String?
+  temperature Float?
+  feelsLike   Float?    @map("feels_like") // Map to match Python naming convention
+  humidity    Int?
+  windSpeed   Float?    @map("wind_speed") // Map to match Python naming convention
+  latitude    Float?
+  longitude   Float?
+} 
