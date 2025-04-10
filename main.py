@@ -6,6 +6,8 @@ from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from prisma import Prisma, register
+from pydantic import BaseModel, Field
+from typing import Optional
 
 # Load environment variables from .env file
 load_dotenv()
@@ -38,6 +40,23 @@ if not OPENWEATHERMAP_API_KEY:
     print("Warning: OPENWEATHERMAP_API_KEY environment variable not set.")
     # In a real app, you might want to raise an exception or handle this differently
     # raise ValueError("OPENWEATHERMAP_API_KEY environment variable is required")
+
+
+# --- Pydantic Models ---
+class WeatherInputData(BaseModel):
+    zipCode: str = Field(..., description="The zip code for the weather data.")
+    city: Optional[str] = None
+    weather: Optional[str] = None
+    description: Optional[str] = None
+    temperature: Optional[float] = None
+    feelsLike: Optional[float] = Field(None, alias="feels_like")  # Use alias for JSON
+    humidity: Optional[int] = None
+    windSpeed: Optional[float] = Field(None, alias="wind_speed")  # Use alias for JSON
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+    class Config:
+        allow_population_by_field_name = True  # Allow using 'feels_like' etc. from JSON
 
 
 # New endpoint to serve the HTML page
@@ -82,42 +101,6 @@ async def get_weather_by_zip(zip_code: str):
                 "latitude": weather_data.get("coord", {}).get("lat"),
                 "longitude": weather_data.get("coord", {}).get("lon"),
             }
-
-            # --- Save to Database ---
-            saved_record = None  # Initialize variable to hold the saved record
-            try:
-                print(f"Attempting to save weather data for zip code {zip_code}...")
-                # Prepare data for Prisma model (handle potential nulls if necessary)
-                prisma_data = {
-                    "zipCode": zip_code,
-                    "city": simplified_data.get("city"),
-                    "weather": simplified_data.get("weather"),
-                    "description": simplified_data.get("description"),
-                    "temperature": simplified_data.get("temperature"),
-                    "feelsLike": simplified_data.get(
-                        "feels_like"
-                    ),  # Corresponds to feels_like in schema via @map
-                    "humidity": simplified_data.get("humidity"),
-                    "windSpeed": simplified_data.get(
-                        "wind_speed"
-                    ),  # Corresponds to wind_speed in schema via @map
-                    "latitude": simplified_data.get("latitude"),
-                    "longitude": simplified_data.get("longitude"),
-                }
-                # Remove keys with None values if your schema fields are not optional
-                # (though in our schema they are mostly optional)
-                # prisma_data_cleaned = {k: v for k, v in prisma_data.items() if v is not None}
-
-                # Use the cleaned data if you implemented that
-                # saved_record = await db.weatherdata.create(data=prisma_data_cleaned)
-                saved_record = await db.weatherdata.create(data=prisma_data)
-                print(f"Successfully saved weather data for zip code {zip_code}.")
-            except Exception as db_error:
-                # Log the error but don't fail the request if DB write fails
-                print(
-                    f"Database Error: Failed to save weather data for zip {zip_code}: {db_error}"
-                )
-            # --- End Save to Database ---
 
             # --- Fetch Historical Data ---
             historical_data = []
@@ -171,9 +154,37 @@ async def get_weather_by_zip(zip_code: str):
                 detail="Service unavailable: Could not connect to weather service.",
             )
         except Exception as e:
-            # Catch any other unexpected errors
             print(f"An unexpected error occurred: {e}")
             raise HTTPException(status_code=500, detail="Internal server error.")
+
+
+# --- New POST Endpoint to Save History ---
+@app.post("/weather/history", status_code=201)
+async def save_weather_to_history(weather_input: WeatherInputData):
+    """
+    Saves provided weather data to the history database.
+    """
+    try:
+        # Convert Pydantic model to dict suitable for Prisma create
+        # Pydantic automatically handles the aliases like feelsLike -> feels_like
+        prisma_data = weather_input.dict(exclude_unset=True)
+
+        print(
+            f"Attempting to save weather data via POST for zip code {weather_input.zipCode}..."
+        )
+        print(f"Data to save: {prisma_data}")
+
+        new_record = await db.weatherdata.create(data=prisma_data)
+        print(f"Successfully saved new record with ID: {new_record.id}")
+        # Return the newly created record (including its ID and createdAt timestamp)
+        return new_record.dict()
+
+    except Exception as e:
+        print(f"Database Error: Failed to save weather data via POST: {e}")
+        # Consider more specific error handling if needed
+        raise HTTPException(
+            status_code=500, detail="Internal server error while saving history."
+        )
 
 
 # New DELETE endpoint for historical data
