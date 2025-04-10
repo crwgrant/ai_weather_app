@@ -1,6 +1,6 @@
 # AI Weather App
 
-This is a simple FastAPI web application that provides current weather information for a given US zip code using the OpenWeatherMap API. It also saves each query result to a local SQLite database and displays historical data for the queried zip code, allowing users to delete individual history entries.
+This is a simple FastAPI web application that provides current weather information for a given US zip code using the OpenWeatherMap API. It displays the latest weather data along with any previously saved historical data for that zip code from a local SQLite database. Users have the option to save the current weather results to the history and can delete individual history entries.
 
 ## Setup
 
@@ -84,7 +84,7 @@ Once the server is running, navigate to `http://127.0.0.1:8000/` in your web bro
 Enter a valid US zip code into the input field and click "Get Weather".
 
 *   The latest weather data for the zip code will be fetched from OpenWeatherMap and displayed.
-*   The fetched data will be saved to the local SQLite database (`dev.db`).
+*   **Optional:** A "Save to History" button appears below the latest weather data. Clicking this button will save the currently displayed weather data to the local SQLite database (`dev.db`). The history table will update dynamically to include the new entry.
 *   Previously saved historical data for the *same zip code* will be displayed in a second table below the latest results.
 *   Each row in the historical data table has a "Delete" button that allows you to remove that specific entry from the database after confirmation.
 
