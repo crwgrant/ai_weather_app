@@ -285,10 +285,6 @@
 
         // --- Existing Delete Function --- 
         async function deleteHistoryRecord(recordId) {
-            if (!confirm(`Are you sure you want to delete record ID: ${recordId}?`)) {
-                return; // Abort if user cancels confirmation
-            }
-
             console.log(`Attempting to delete record ${recordId}`);
             try {
                 const response = await fetch(`/weather/history/${recordId}`, {
