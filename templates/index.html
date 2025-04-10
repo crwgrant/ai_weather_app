@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Weather App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-700">Check Weather by Zip Code</h1>
+        <form id="weather-form" class="space-y-4">
+            <div>
+                <label for="zip-code" class="block text-sm font-medium text-gray-700">US Zip Code:</label>
+                <input type="text" id="zip-code" name="zip-code" required
+                       pattern="^[0-9]{5}(?:-[0-9]{4})?$"
+                       title="Enter a 5-digit US zip code"
+                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <button type="submit"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Get Weather
+            </button>
+        </form>
+
+        <div id="weather-results" class="mt-8">
+            {/* Weather data will be displayed here */}
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('weather-form');
+        const zipCodeInput = document.getElementById('zip-code');
+        const resultsDiv = document.getElementById('weather-results');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent default page reload
+            const zipCode = zipCodeInput.value.trim();
+            resultsDiv.innerHTML = '<p class="text-center text-gray-500">Loading...</p>'; // Show loading indicator
+
+            if (!zipCode) {
+                resultsDiv.innerHTML = '<p class="text-center text-red-500">Please enter a zip code.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/weather/${zipCode}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Display API error message from FastAPI
+                    resultsDiv.innerHTML = `<p class="text-center text-red-500">Error: ${data.detail || 'Could not fetch weather data.'}</p>`;
+                } else {
+                    const latestData = data.latest;
+                    const historyData = data.history;
+
+                    // Function to format datetime string (optional but recommended)
+                    function formatDateTime(isoString) {
+                        if (!isoString) return 'N/A';
+                        try {
+                            return new Date(isoString).toLocaleString();
+                        } catch (e) {
+                            return isoString; // Return original if parsing fails
+                        }
+                    }
+
+                    // --- Display Latest Weather Data --- 
+                    let latestHtml = `
+                        <h2 class="text-xl font-semibold mb-4 text-center text-gray-800">Latest Weather in ${latestData.city || 'N/A'}</h2>
+                        <div class="overflow-x-auto rounded-lg border border-gray-200 mb-6">
+                            <table class="min-w-full divide-y divide-gray-200 bg-white text-sm">
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Temperature</td>
+                                        <td class="whitespace-nowrap px-4 py-2 text-gray-700">${latestData.temperature !== null ? latestData.temperature + '&deg;F' : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Feels Like</td>
+                                        <td class="whitespace-nowrap px-4 py-2 text-gray-700">${latestData.feels_like !== null ? latestData.feels_like + '&deg;F' : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Condition</td>
+                                        <td class="whitespace-nowrap px-4 py-2 text-gray-700">${latestData.weather || 'N/A'} (${latestData.description || 'N/A'})</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Humidity</td>
+                                        <td class="whitespace-nowrap px-4 py-2 text-gray-700">${latestData.humidity !== null ? latestData.humidity + '%' : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Wind Speed</td>
+                                        <td class="whitespace-nowrap px-4 py-2 text-gray-700">${latestData.wind_speed !== null ? latestData.wind_speed + ' mph' : 'N/A'}</td>
+                                    </tr>
+                                     <tr>
+                                        <td class="whitespace-nowrap px-4 py-2 font-medium text-gray-900">Coordinates</td>
+                                        <td class="whitespace-nowrap px-4 py-2 text-gray-700">Lat: ${latestData.latitude || 'N/A'}, Lon: ${latestData.longitude || 'N/A'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    // --- Display Historical Weather Data ---
+                    let historyHtml = '';
+                    if (historyData && historyData.length > 0) {
+                        historyHtml = `
+                            <h2 class="text-xl font-semibold mb-4 text-center text-gray-800">Historical Data for ${zipCode}</h2>
+                            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                                <table class="min-w-full divide-y divide-gray-200 bg-white text-sm">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">Timestamp</th>
+                                            <th class="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">Temp (°F)</th>
+                                            <th class="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">Condition</th>
+                                            <th class="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">Humidity (%)</th>
+                                            <th class="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">Wind (mph)</th>
+                                            <th class="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200" id="history-table-body">
+                        `;
+                        
+                        historyData.forEach(record => {
+                            // Store record ID for easy access
+                            const recordId = record.id; 
+                            historyHtml += `
+                                <tr id="history-row-${recordId}">
+                                    <td class="whitespace-nowrap px-4 py-2 text-gray-700">${formatDateTime(record.createdAt)}</td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-gray-700">${record.temperature !== null ? record.temperature : 'N/A'}</td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-gray-700">${record.weather || 'N/A'} (${record.description || 'N/A'})</td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-gray-700">${record.humidity !== null ? record.humidity : 'N/A'}</td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-gray-700">${record.windSpeed !== null ? record.windSpeed : 'N/A'}</td>
+                                    <td class="whitespace-nowrap px-4 py-2 text-gray-700">
+                                        <button 
+                                            onclick="deleteHistoryRecord(${recordId})" 
+                                            class="px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-400 transition duration-150 ease-in-out">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+
+                        historyHtml += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    } else {
+                        historyHtml = '<p class="text-center text-gray-500 mt-6">No historical data found for this zip code.</p>';
+                    }
+
+                    // Combine latest and historical HTML and update the results div
+                    resultsDiv.innerHTML = latestHtml + historyHtml;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                resultsDiv.innerHTML = '<p class="text-center text-red-500">An error occurred while fetching data. Please check the console.</p>';
+            }
+        });
+
+        // --- New Function to Handle Delete --- 
+        async function deleteHistoryRecord(recordId) {
+            if (!confirm(`Are you sure you want to delete record ID: ${recordId}?`)) {
+                return; // Abort if user cancels confirmation
+            }
+
+            console.log(`Attempting to delete record ${recordId}`);
+            try {
+                const response = await fetch(`/weather/history/${recordId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+
+                // If successful, remove the row from the table
+                const rowToRemove = document.getElementById(`history-row-${recordId}`);
+                if (rowToRemove) {
+                    rowToRemove.remove();
+                    console.log(`Successfully removed row for record ${recordId}`);
+                    // Optional: Check if table body is now empty and show message
+                    const historyTableBody = document.getElementById('history-table-body');
+                    if (historyTableBody && historyTableBody.rows.length === 0) {
+                        // Find the history section and replace table with message
+                        // This is a bit simplistic; might need better DOM traversal
+                         const historyContainer = historyTableBody.closest('div.overflow-x-auto').parentNode;
+                         if(historyContainer){
+                            historyContainer.innerHTML = '<p class="text-center text-gray-500 mt-6">No historical data remaining for this zip code.</p>';
+                         }
+                    }
+                } else {
+                    console.warn(`Could not find row history-row-${recordId} to remove.`);
+                }
+                // Optionally show a success message to the user
+                alert(`Record ${recordId} deleted successfully.`); 
+
+            } catch (error) {
+                console.error('Error deleting record:', error);
+                alert(`Error deleting record ${recordId}: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html> 
