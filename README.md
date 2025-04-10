@@ -1,3 +1,7 @@
+# AI Practice Project
+
+This is a practice project for learning how to build projects with AI. It took me about an hour to build this app using Cursor and the `gemini-2.5-pro-exp-03-25` model in agent mode.
+
 # AI Weather App
 
 This is a simple FastAPI web application that provides current weather information for a given US zip code using the OpenWeatherMap API. It displays the latest weather data along with any previously saved historical data for that zip code from a local SQLite database. Users have the option to save the current weather results to the history and can delete individual history entries.
