@@ -3,6 +3,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from prisma import Prisma, register
@@ -29,6 +30,9 @@ async def lifespan(app: FastAPI):
 
 # Pass lifespan manager to FastAPI app
 app = FastAPI(lifespan=lifespan)
+
+# Mount the static directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Configure Jinja2 templates
 templates = Jinja2Templates(directory="templates")
