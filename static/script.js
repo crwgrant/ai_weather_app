@@ -2,6 +2,15 @@ const form = document.getElementById('weather-form');
 const zipCodeInput = document.getElementById('zip-code');
 const resultsDiv = document.getElementById('weather-results');
 
+// --- Event Listener for Page Load --- 
+document.addEventListener('DOMContentLoaded', () => {
+    const lastZip = localStorage.getItem('lastSearchedZip');
+    if (lastZip) {
+        zipCodeInput.value = lastZip;
+        console.log(`Prefilled zip code input with last searched: ${lastZip}`);
+    }
+});
+
 // --- Local Storage Helper Functions ---
 function getHistoryFromLocalStorage(zipCode) {
     const key = `weatherHistory_${zipCode}`;
@@ -43,6 +52,10 @@ form.addEventListener('submit', async (event) => {
         if (!response.ok) {
             resultsDiv.innerHTML = `<p class="text-center text-red-500">Error: ${data.detail || 'Could not fetch weather data.'}</p>`;
         } else {
+            // --- Save last searched zip on success --- 
+            localStorage.setItem('lastSearchedZip', zipCode);
+            console.log(`Saved last searched zip code to Local Storage: ${zipCode}`);
+
             const latestData = data.latest;
             // Fetch history from Local Storage for this zip code
             const historyData = getHistoryFromLocalStorage(zipCode);
