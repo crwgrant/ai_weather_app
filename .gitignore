@@ -55,13 +55,6 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# SQLite databases
-dev.db
-dev.db-journal
-dev.db-wal
-*.sqlite
-*.sqlite3
-
 # Flask stuff:
 instance/
 .webassets-cache

@@ -4,7 +4,7 @@ This is a practice project for learning how to build projects with AI. It took m
 
 # Weather App
 
-This is a simple FastAPI web application that provides current weather information for a given US zip code using the OpenWeatherMap API. It displays the latest weather data along with any previously saved historical data for that zip code from a local SQLite database. Users have the option to save the current weather results to the history and can delete individual history entries.
+This is a simple FastAPI web application that provides current weather information for a given US zip code using the OpenWeatherMap API. It displays the latest weather data and allows users to optionally save results to their browser's Local Storage. Saved historical data for the queried zip code is displayed, and users can delete individual history entries stored in their browser.
 
 ## Setup
 
@@ -15,119 +15,68 @@ This is a simple FastAPI web application that provides current weather informati
     ```
 
 2.  **Create and activate a virtual environment:**
-    It's recommended to use a virtual environment to manage dependencies.
     ```bash
     python3 -m venv venv
     ```
-    Activate the virtual environment. The command depends on your operating system and shell:
-    *   **macOS/Linux (bash/zsh):**
-        ```bash
-        source venv/bin/activate
-        ```
-    *   **Windows (Command Prompt):**
-        ```cmd
-        venv\Scripts\activate.bat
-        ```
-    *   **Windows (PowerShell):**
-        ```powershell
-        .\venv\Scripts\Activate.ps1
-        ```
-        (If you encounter execution policy issues on Windows, you might need to run `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` in PowerShell as an administrator first.)
-    *   **Windows (Git Bash):**
-        ```bash
-        source venv/Scripts/activate
-        ```
-    You should see `(venv)` prepended to your command prompt after successful activation.
+    Activate:
+    *   macOS/Linux: `source venv/bin/activate`
+    *   Windows CMD: `venv\Scripts\activate.bat`
+    *   Windows PowerShell: `.\venv\Scripts\Activate.ps1`
+    *   Windows Git Bash: `source venv/Scripts/activate`
 
 3.  **Install dependencies (with the virtual environment active):**
     ```bash
     pip install -r requirements.txt
     ```
 
-4.  **Configure OpenWeatherMap API Key and Database URL:**
+4.  **Configure OpenWeatherMap API Key:**
     -   Sign up for a free API key at [OpenWeatherMap](https://openweathermap.org/appid).
-    -   Create a file named `.env` in the root directory of the project (if it doesn't exist).
-    -   Add your API key and the database URL to the `.env` file:
+    -   Create a file named `.env` in the root directory.
+    -   Add your API key to the `.env` file:
         ```dotenv
         OPENWEATHERMAP_API_KEY=your_actual_api_key_here
-        DATABASE_URL="file:./dev.db"
         ```
-        Replace `your_actual_api_key_here` with the API key you obtained.
-        **Important:** The `.gitignore` file is configured to ignore `.env` and `dev.db*` files.
-
-5.  **Setup Database (with the virtual environment active):**
-    Run the following Prisma commands to generate the client and create/update the database schema:
-    ```bash
-    prisma generate
-    prisma db push
-    ```
-    This will create a `dev.db` SQLite file in your project root and set up the necessary tables.
+        **Important:** The `.gitignore` file is configured to ignore `.env`.
 
 ## Running the Application
 
 Make sure your virtual environment is active.
 
-To start the FastAPI application, run the following command in your terminal:
-
-```bash
-python main.py
-```
-
-Alternatively, you can use `uvicorn` directly:
-
 ```bash
 uvicorn main:app --reload
 ```
 
-This will start the server, typically at `http://127.0.0.1:8000`. The `--reload` flag enables auto-reloading when code changes are detected, which is useful for development.
+This will start the server, typically at `http://127.0.0.1:8000`.
 
 ## Usage
 
 Once the server is running, navigate to `http://127.0.0.1:8000/` in your web browser.
 
-Enter a valid US zip code into the input field and click "Get Weather".
+Enter a valid US zip code and click "Get Weather".
 
 *   The latest weather data for the zip code will be fetched from OpenWeatherMap and displayed.
-*   **Optional:** A "Save to History" button appears below the latest weather data. Clicking this button will save the currently displayed weather data to the local SQLite database (`dev.db`). The history table will update dynamically to include the new entry.
-*   Previously saved historical data for the *same zip code* will be displayed in a second table below the latest results.
-*   Each row in the historical data table has a "Delete" button that allows you to remove that specific entry from the database after confirmation.
+*   **Optional:** A "Save to Browser History" button appears. Clicking this saves the current weather data to your browser's Local Storage. The history table updates dynamically.
+*   Previously saved historical data for the *same zip code* (from Local Storage) is displayed below the latest results.
+*   Each row in the historical data table has a "Delete" button to remove that specific entry from Local Storage.
 
-You can also access the raw weather data API endpoint directly using a tool like `curl`:
+**Note:** Weather history is stored only in your browser and is not shared or persisted elsewhere. Clearing your browser's storage will remove the history.
+
+You can also access the raw weather data API endpoint directly:
 
 ```bash
 curl http://127.0.0.1:8000/weather/{zip_code}
 ```
 
-Replace `{zip_code}` with a valid US zip code (e.g., `90210`).
-
 **Example API Response:**
 
-When using the `/weather/{zip_code}` endpoint directly, the response includes both the latest data and the history:
+The API now only returns the latest fetched data:
 
 ```json
 {
   "latest": {
     "city": "Mountain View",
     "weather": "Clear",
-    "description": "clear sky",
-    "temperature": 65.71,
-    "feels_like": 64.81,
-    "humidity": 60,
-    "wind_speed": 5.75,
-    "latitude": 37.3861,
-    "longitude": -122.0839
-  },
-  "history": [
-    {
-      "id": 1,
-      "createdAt": "2023-10-27T10:00:00.000Z",
-      "zipCode": "94043",
-      "city": "Mountain View",
-      // ... other fields ...
-    },
-    // ... more history records ...
-  ]
+    // ... other fields ...
+  }
 }
-```
-
-If an invalid zip code is provided or another error occurs, an appropriate JSON error message will be returned by the API endpoint. 
+``` 
