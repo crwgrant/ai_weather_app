@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lastZip = localStorage.getItem('lastSearchedZip');
     if (lastZip) {
         zipCodeInput.value = lastZip;
-        console.log(`Prefilled zip code input with last searched: ${lastZip}`);
+        // console.log(`Prefilled zip code input with last searched: ${lastZip}`);
     }
 });
 
@@ -54,7 +54,7 @@ form.addEventListener('submit', async (event) => {
         } else {
             // --- Save last searched zip on success --- 
             localStorage.setItem('lastSearchedZip', zipCode);
-            console.log(`Saved last searched zip code to Local Storage: ${zipCode}`);
+            // console.log(`Saved last searched zip code to Local Storage: ${zipCode}`);
 
             const latestData = data.latest;
             // Fetch history from Local Storage for this zip code
@@ -190,7 +190,7 @@ async function saveCurrentWeatherToHistory() {
 
         historyArray.push(newRecord);
         saveHistoryToLocalStorage(zipCodeForSave, historyArray);
-        console.log("Successfully saved to Local Storage:", newRecord);
+        // console.log("Successfully saved to Local Storage:", newRecord);
 
         // --- Update History Display --- 
         const historyContainer = document.getElementById('history-content');
@@ -214,7 +214,7 @@ async function saveCurrentWeatherToHistory() {
 
 // --- Function to Handle Delete from History (Local Storage) --- 
 async function deleteHistoryRecord(zipCode, recordId) {
-    console.log(`Attempting to delete record ${recordId} for zip ${zipCode} from Local Storage`);
+    // console.log(`Attempting to delete record ${recordId} for zip ${zipCode} from Local Storage`);
     try {
         let historyArray = getHistoryFromLocalStorage(zipCode);
         const initialLength = historyArray.length;
@@ -224,7 +224,7 @@ async function deleteHistoryRecord(zipCode, recordId) {
 
         if (historyArray.length < initialLength) {
              saveHistoryToLocalStorage(zipCode, historyArray);
-             console.log(`Successfully deleted record ${recordId} from Local Storage.`);
+             // console.log(`Successfully deleted record ${recordId} from Local Storage.`);
 
              // --- Update History Display --- 
              const historyContainer = document.getElementById('history-content');
